@@ -138,9 +138,8 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
     }
 
     for (i = 0; i < time_step; i++) {
-        printf( "timestep=%d\n ",i);
         // f,i,c_wave,o
-        C[0] = x_temp;
+        C[0] = x_temp + i * m[0] * n[0];
         C[1] = x_temp + (i + time_step) * m[0] * n[0];
         C[2] = x_temp + (i + 2 * time_step) * m[0] * n[0];
         C[3] = x_temp + (i + 3 * time_step) * m[0] * n[0];
