@@ -1,11 +1,21 @@
+// ***************************************
+// ************** LSTM *******************
+// ***************************************
+// f_t = sigmoid( w_fx * x_t + w_fh * h_tm1 + b_f)
+// i_t = sigmoid( w_ix * x_t + w_ih * h_tm1 + b_i)
+// c_wave_t = tanh( w_cx * x_t + w_ch * h_tm1 + b_c)
+// o_t = sigmoid( w_ox * x_t + w_oh * h_tm1 + b_o)
+// c_t = f_t * c_tm1 + i_t * c_wave_t
+// h_t = o_t * tanh(c_t)
+// References
+// [Long short-term memory](http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97_lstm.pdf) (original 1997 paper)
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "mkl.h"
 #include<sys/time.h>
 #include <omp.h>
 #include <stdbool.h>
-
-#define OMP_THRESHOLD 10
 
 //share global memory
 float** A;
@@ -18,18 +28,11 @@ float* c_wave_t;
 float* o_t;
 float* c_t;
 
-// ***************************************
-// ************** LSTM *******************
-// ***************************************
-//f_t = sigmoid( w_fx * x_t + w_fh * h_tm1 + self.b_f)
-//i_t = sigmoid( w_ix * x_t + w_ih * h_tm1 + self.b_i)
-//c_wave_t = tanh( w_cx * x_t + w_ch * h_tm1 + self.b_c)
-//o_t = sigmoid( w_ox * x_t + w_oh * h_tm1 + self.b_o)
-//c_t = f_t * c_tm1 + i_t * c_wave_t
-//h_t = o_t * tanh(c_t)
-//References
-//[Long short-term memory](http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97_lstm.pdf) (original 1997 paper)
-//Arguments
+// This is a batch GEMM implementation of inference benchmark for Long short term memory unit.
+// Method
+// batch GEMM for w_x * x both inside every timestep and accross timesteps. batch GEMM for w_h * h inside every timestep.
+// Arguments
+// wx contains w_fx, w_ix, w_cx, w_ox, w_h contains w_fh, w_ih, w_ch, w_oh, b contains b_f, b_i, b_c, b_o, h_0 and c_0 are initial state of h and c respectively.
 void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, float* w_x, float* w_h, float* b, float* x, float* h_0, float* c_0, /*out*/float* y, bool return_sequences){
     int i,j;
     // w_x * x
