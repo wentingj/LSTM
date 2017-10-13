@@ -149,19 +149,19 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
         // sigmoid for f,i,o, tanh for c_wave
         #pragma omp parallel for
         for (j = 0; j < mn; j++) {
-            double exp_f = exp((double)(C[0][j]));
-            double exp_i = exp((double)(C[1][j]));
-            c_wave_t[j] = tanh((double)(C[2][j]));
-            double exp_o = exp((double)(C[3][j]));
-            f_t[j] = exp_f / ((double)1.0 + exp_f);        
-            i_t[j] = exp_i / ((double)1.0 + exp_i);
-            o_t[j] = exp_o / ((double)1.0 + exp_o);
+            float exp_f = exp((float)(C[0][j]));
+            float exp_i = exp((float)(C[1][j]));
+            c_wave_t[j] = tanh((float)(C[2][j]));
+            float exp_o = exp((float)(C[3][j]));
+            f_t[j] = exp_f / ((float)1.0 + exp_f);        
+            i_t[j] = exp_i / ((float)1.0 + exp_i);
+            o_t[j] = exp_o / ((float)1.0 + exp_o);
         }
         //c
         if (i > 0) {
             #pragma omp parallel for 
             for (j = 0; j < mn; j++) { 
-                c_t[j] = (float)((double)(f_t[j]) * (double)(c_t[j]) + (double)(i_t[j]) * (double)(c_wave_t[j])); 
+                c_t[j] = (float)((float)(f_t[j]) * (float)(c_t[j]) + (float)(i_t[j]) * (float)(c_wave_t[j])); 
             }
         }
         //h
@@ -173,7 +173,7 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
         }
         #pragma omp parallel for
         for (j = 0; j < mn; j++) {
-            y_ptr[j] = (double)(o_t[j]) * tanh((double)(c_t[j]));
+            y_ptr[j] = (float)(o_t[j]) * tanh((float)(c_t[j]));
         }
         // update
         B[0] = y_ptr;
