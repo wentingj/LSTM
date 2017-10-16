@@ -34,7 +34,7 @@ float* c_t;
 // Arguments
 // wx contains w_fx, w_ix, w_cx, w_ox, w_h contains w_fh, w_ih, w_ch, w_oh, b contains b_f, b_i, b_c, b_o, h_0 and c_0 are initial state of h and c respectively.
 void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, float* w_x, float* w_h, float* b, float* x, float* h_0, float* c_0, /*out*/float* y, bool return_sequences){
-    int i,j;
+    int i,j,p;
     // w_x * x
     MKL_INT m[1]; 
     MKL_INT n[1]; 
@@ -71,15 +71,17 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
         #pragma omp parallel for 
         for (i = 0; i < time_step; i++) { 
             for (j = 0; j < batch_size; j++) { 
-                size_t offset0 = hid * j + hid * batch_size * i; 
-                size_t offset1 = hid * j + hid * batch_size * (i + time_step); 
-                size_t offset2 = hid * j + hid * batch_size * (i + 2 * time_step); 
-                size_t offset3 = hid * j + hid * batch_size * (i + 3 * time_step); 
+                for (p = 0; p < hid; p++) { 
+                    size_t offset0 = i * batch_size * hid + j * hid + p; 
+                    size_t offset1 = (i + time_stemp) * batch_size * hid + j * hid + p; 
+                    size_t offset2 = (i + 2 * time_step) * batch_size * hid + j * hid + p; 
+                    size_t offset3 = (i + 3 * time_step) * batch_size * hid + j * hid + p; 
         
-                memcpy((void*)(x_temp + offset0), (void*)b, hid * sizeof (float)); 
-                memcpy((void*)(x_temp + offset1), (void*)b + hid * sizeof (float), hid * sizeof (float)); 
-                memcpy((void*)(x_temp + offset2), (void*)b + 2 * hid * sizeof (float), hid * sizeof (float)); 
-                memcpy((void*)(x_temp + offset3), (void*)b + 3 * hid * sizeof (float), hid * sizeof (float)); 
+                    x_temp[offset0] = b_ptr[p]; 
+                    x_temp[offset1] = b_ptr[p + hid]; 
+                    x_temp[offset2] = b_ptr[p + 2 * hid]; 
+                    x_temp[offset2] = b_ptr[p + 3 * hid]; 
+                } 
             } 
         } 
 
