@@ -73,7 +73,7 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
             for (j = 0; j < batch_size; j++) { 
                 for (p = 0; p < hid; p++) { 
                     size_t offset0 = i * batch_size * hid + j * hid + p; 
-                    size_t offset1 = (i + time_stemp) * batch_size * hid + j * hid + p; 
+                    size_t offset1 = (i + time_step) * batch_size * hid + j * hid + p; 
                     size_t offset2 = (i + 2 * time_step) * batch_size * hid + j * hid + p; 
                     size_t offset3 = (i + 3 * time_step) * batch_size * hid + j * hid + p; 
         
