@@ -160,11 +160,9 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
             o_t[j] = exp_o / ((float)1.0 + exp_o);
         }
         //c
-        if (i > 0) {
-            #pragma omp parallel for 
-            for (j = 0; j < mn; j++) { 
-                c_t[j] = (float)((float)(f_t[j]) * (float)(c_t[j]) + (float)(i_t[j]) * (float)(c_wave_t[j])); 
-            }
+        #pragma omp parallel for 
+        for (j = 0; j < mn; j++) { 
+            c_t[j] = (float)((float)(f_t[j]) * (float)(c_t[j]) + (float)(i_t[j]) * (float)(c_wave_t[j])); 
         }
         //h
         float* y_ptr = NULL;
@@ -182,20 +180,20 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
         B[1] = B[0];
         B[2] = B[0];
         B[3] = B[0];
-        printf( "\n");
     }
 }
 
 void main() {
     srand(45678);
     int i,j;
+    int loops = 100;
     //reuse memory
     //assume timestep changes for diff input length
     int max_len = 128;//max timestep
-    int batch_size = 2;
-    int time_step = 3;
-    int input_dim = 10;
-    int hid = 10;
+    int batch_size = 64;
+    int time_step = 10;
+    int input_dim = 150;
+    int hid = 1024;
 
     A = (float**)mkl_malloc(4 * max_len * sizeof (float*), 64);
     B = (float**)mkl_malloc(4 * max_len * sizeof (float*), 64);
@@ -243,12 +241,21 @@ void main() {
     }
 
     LSTM_batch_gemm(batch_size, time_step, input_dim, hid, w_x, w_h, b, x, h_0, c_0, /*out*/y, return_sequences);       
-    
-    printf("output:\n");
-    for (i = 0; i < hid * batch_size; i++) {
-        printf( "%f ",y[i]);
+    LSTM_batch_gemm(batch_size, time_step, input_dim, hid, w_x, w_h, b, x, h_0, c_0, /*out*/y, return_sequences);       
+    struct timeval tic, toc;
+    gettimeofday(&tic, NULL);
+    for( i = 0; i < loops; i++) {
+        LSTM_batch_gemm(batch_size, time_step, input_dim, hid, w_x, w_h, b, x, h_0, c_0, /*out*/y, return_sequences);       
     }
-    printf( "\n");
+    gettimeofday(&toc, NULL);
+    float interval = (toc.tv_sec-tic.tv_sec)*1000 + (float)(toc.tv_usec-tic.tv_usec)/1000;
+    printf("samples/s: %f\n", batch_size*loops  / (interval / 1000));
+    
+    //printf("output:\n");
+    //for (i = 0; i < hid * batch_size; i++) {
+    //    printf( "%f ",y[i]);
+    //}
+    //printf( "\n");
 
     mkl_free(A);
     mkl_free(B);
