@@ -16,8 +16,49 @@
 #include<sys/time.h>
 #include <omp.h>
 #include <stdbool.h>
+#include "helper_string.h"
+#include "math.h"
 
+int loops = 100;
+int batch_size = 64;
+int time_step = 10;
+int input_dim = 150;
+int hid = 1024;
 //share global memory
+void parseCmdLine(int argc, char **argv)
+{
+        if(checkCmdLineFlag( argc, (const char**) argv, "help") || (argc == 1))
+        {
+                printf("--help:\t\t\t print this menu\n");
+                printf("--batch_size=[int]:\t\t number of kerenl execution times (default: 1000)\n");
+                printf("--time_step=[int]:\t\t height of W \n");
+                printf("--input_dim=[int]:\t\t width of W \n");
+                printf("--hid=[int]:\t\t width of X \n");
+                exit(0);
+        }
+
+        if(checkCmdLineFlag( argc, (const char**) argv, "batch_size"))
+        {
+                batch_size = getCmdLineArgumentInt( argc, (const char**) argv, "batch_size");
+        }
+
+        if (checkCmdLineFlag( argc, (const char**) argv, "time_step"))
+        {
+                time_step = getCmdLineArgumentInt( argc, (const char**) argv, "time_step");
+        }
+
+        if (checkCmdLineFlag( argc, (const char**) argv, "input_dim"))
+        {
+                input_dim = getCmdLineArgumentInt( argc, (const char**) argv, "input_dim");
+        }
+
+        if (checkCmdLineFlag( argc, (const char**) argv, "hid"))
+        {
+                hid = getCmdLineArgumentInt( argc, (const char**) argv, "hid");
+        }
+}
+
+
 float** A;
 float** B;
 float** C;
@@ -183,17 +224,18 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
     }
 }
 
-void main() {
+void main(int argc, char** argv) {
     srand(45678);
     int i,j;
-    int loops = 100;
+    //int loops = 100;
     //reuse memory
     //assume timestep changes for diff input length
     int max_len = 128;//max timestep
-    int batch_size = 64;
-    int time_step = 10;
-    int input_dim = 150;
-    int hid = 1024;
+    //int batch_size = 64;
+    //int time_step = 10;
+    //int input_dim = 150;
+    //int hid = 1024;
+    parseCmdLine(argc, argv);
 
     A = (float**)mkl_malloc(4 * max_len * sizeof (float*), 64);
     B = (float**)mkl_malloc(4 * max_len * sizeof (float*), 64);
@@ -240,6 +282,7 @@ void main() {
         c_0[i] = ((float)rand()/(float)RAND_MAX);
     }
 
+    printf("batch_size=%d, time_step=%d, input_dim=%d, hid=%d\n", batch_size, time_step, input_dim, hid);
     LSTM_batch_gemm(batch_size, time_step, input_dim, hid, w_x, w_h, b, x, h_0, c_0, /*out*/y, return_sequences);       
     LSTM_batch_gemm(batch_size, time_step, input_dim, hid, w_x, w_h, b, x, h_0, c_0, /*out*/y, return_sequences);       
     struct timeval tic, toc;
