@@ -111,17 +111,17 @@ void  LSTM_batch_gemm(int batch_size, int time_step, int input_dim, int hid, flo
         beta[0] = 1.0;
         #pragma omp parallel for 
         for (i = 0; i < time_step; i++) { 
-            for (j = 0; j < batch_size; j++) { 
-                for (p = 0; p < hid; p++) { 
-                    size_t offset0 = i * batch_size * hid + j * hid + p; 
-                    size_t offset1 = (i + time_step) * batch_size * hid + j * hid + p; 
-                    size_t offset2 = (i + 2 * time_step) * batch_size * hid + j * hid + p; 
-                    size_t offset3 = (i + 3 * time_step) * batch_size * hid + j * hid + p; 
+            for (j = 0; j < hid; j++) { 
+                for (p = 0; p < batch_size; p++) { 
+                    size_t offset0 = i * batch_size * hid + j * batch_size + p; 
+                    size_t offset1 = (i + time_step) * batch_size * hid + j * batch_size + p; 
+                    size_t offset2 = (i + 2 * time_step) * batch_size * hid + j * batch_size + p; 
+                    size_t offset3 = (i + 3 * time_step) * batch_size * hid + j * batch_size + p; 
         
-                    x_temp[offset0] = b[p]; 
-                    x_temp[offset1] = b[p + hid]; 
-                    x_temp[offset2] = b[p + 2 * hid]; 
-                    x_temp[offset2] = b[p + 3 * hid]; 
+                    x_temp[offset0] = b[j]; 
+                    x_temp[offset1] = b[j + hid]; 
+                    x_temp[offset2] = b[j + 2 * hid]; 
+                    x_temp[offset3] = b[j + 3 * hid]; 
                 } 
             } 
         } 
